@@ -1,0 +1,26 @@
+# Python & Virtual Environments
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Impeccable Local Cache & Visual Audits
+.impeccable/
+.impeccable-cache/
+
+# Node & Frontend Build Artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Tauri & Rust Compilation Artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# OS / Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
