@@ -9,8 +9,44 @@
 
     body {
         margin: 0;
-        background-color: #09090b;
-        color: #fafafa;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        letter-spacing: -0.01em;
     }
+
+    code,
+    pre,
+    kbd {
+        font-family: 'JetBrains Mono', monospace;
+    }
+}
+
+/* Claude Thinking Wave Pulse */
+@keyframes claudeWave {
+
+    0%,
+    100% {
+        transform: scaleY(0.4);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+.animate-claude-1 {
+    animation: claudeWave 1.2s ease-in-out infinite 0ms;
+}
+
+.animate-claude-2 {
+    animation: claudeWave 1.2s ease-in-out infinite 200ms;
+}
+
+.animate-claude-3 {
+    animation: claudeWave 1.2s ease-in-out infinite 400ms;
+}
+
+.animate-claude-4 {
+    animation: claudeWave 1.2s ease-in-out infinite 600ms;
 }

@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,11 +25,11 @@ def list_files(relative_path: str = ".") -> Dict[str, Any]:
     """Inspect files in the safe local workspace directory."""
     return list_workspace_files(relative_path)
 
-# 2. Canonical Tool Registry & Schemas
+# 2. Canonical Tool Registry
 TOOL_REGISTRY = [
     {
         "name": "system_telemetry",
-        "description": "Captures live CPU load, resident RAM, and memory headroom from the OS kernel.",
+        "description": "Captures live CPU load, resident RAM, and memory headroom from OS kernel.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -38,7 +38,7 @@ TOOL_REGISTRY = [
     },
     {
         "name": "list_files",
-        "description": "Safely inspects files and directories inside the local project workspace.",
+        "description": "Safely inspects files and directory hierarchy inside the project workspace.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -56,8 +56,8 @@ TOOL_REGISTRY = [
 # 3. FastAPI Gateway
 app = FastAPI(
     title="OrbitMCP Desktop Gateway",
-    version="1.0.0",
-    description="Edge-native IPC connecting Tauri frontend to FastMCP & Local LLM"
+    version="1.1.0",
+    description="Edge-native IPC connecting UI to FastMCP & Local LLM"
 )
 
 app.add_middleware(
@@ -71,6 +71,10 @@ class AgentRequest(BaseModel):
     prompt: str = Field(..., description="The user prompt or query")
     model: str = Field(default="llama3.2:3b", description="Local Ollama model identifier")
     temperature: float = Field(default=0.2, ge=0.0, le=1.0)
+    enabled_tools: Optional[List[str]] = Field(
+        default=None, 
+        description="List of tool names allowed to be invoked by the model"
+    )
 
 @app.get("/api/health")
 def health_check():
@@ -80,6 +84,19 @@ def health_check():
         "telemetry": get_system_metrics()
     }
 
+@app.get("/api/models")
+def get_installed_models():
+    """Queries local Ollama daemon for available pulled models."""
+    try:
+        res = requests.get("http://127.0.0.1:11434/api/tags", timeout=3)
+        if res.status_code == 200:
+            models_data = res.json().get("models", [])
+            model_names = [m["name"] for m in models_data]
+            return {"models": model_names if model_names else ["llama3.2:3b"]}
+    except Exception:
+        pass
+    return {"models": ["llama3.2:3b", "qwen2.5:3b", "mistral:latest", "phi3:mini"]}
+
 @app.get("/api/tools")
 def get_registered_tools():
     """Returns standardized MCP tool definitions for UI inspection."""
@@ -88,6 +105,11 @@ def get_registered_tools():
 @app.post("/api/run-agent")
 def run_agent_loop(req: AgentRequest):
     """Executes a single-turn agentic tool-calling cycle with local Ollama."""
+    # Filter tools by enabled list
+    active_tools = TOOL_REGISTRY
+    if req.enabled_tools is not None:
+        active_tools = [t for t in TOOL_REGISTRY if t["name"] in req.enabled_tools]
+
     ollama_tools = [
         {
             "type": "function",
@@ -97,7 +119,7 @@ def run_agent_loop(req: AgentRequest):
                 "parameters": t["parameters"]
             }
         }
-        for t in TOOL_REGISTRY
+        for t in active_tools
     ]
 
     payload = {
@@ -112,7 +134,7 @@ def run_agent_loop(req: AgentRequest):
             },
             {"role": "user", "content": req.prompt}
         ],
-        "tools": ollama_tools,
+        "tools": ollama_tools if len(ollama_tools) > 0 else None,
         "stream": False,
         "options": {
             "temperature": req.temperature,
@@ -133,7 +155,7 @@ def run_agent_loop(req: AgentRequest):
             return {
                 "type": "text_response",
                 "content": message.get("content", ""),
-                "tool_invoked": None
+                "tool_calls": []
             }
 
         execution_results = []
@@ -149,7 +171,7 @@ def run_agent_loop(req: AgentRequest):
             elif tool_name == "list_files":
                 result = list_workspace_files(tool_args.get("relative_path", "."))
             else:
-                result = {"error": f"Unknown tool: {tool_name}"}
+                result = {"error": f"Tool '{tool_name}' is not allowed or unrecognized."}
                 
             execution_results.append({
                 "tool": tool_name,
