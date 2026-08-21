@@ -193,7 +193,6 @@ function JsonViewer({ data, theme }: { data: any; theme: ThemeTokens }) {
     );
 }
 
-// Authentic Claude Thinking Process Accordion
 function ClaudeThinkingProcess({
     isThinking,
     elapsedTime,
