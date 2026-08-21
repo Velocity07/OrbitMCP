@@ -1,22 +1,26 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
   "productName": "OrbitMCP",
-  "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "version": "1.1.0",
+  "identifier": "com.velocity.orbitmcp",
   "build": {
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "OrbitMCP Control Plane ",
-        "width": 800,
-        "height": 600,
+        "title": "OrbitMCP Control Plane",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": true,
+        "theme": "Dark"
       }
     ],
     "security": {
@@ -32,9 +36,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "android": {
-      "debugApplicationIdSuffix": ".debug"
-    }
+    ]
   }
 }
